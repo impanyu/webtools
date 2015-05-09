@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>PicnVid</title>
+<meta charset="utf-8">
+
+<!--[if lt IE 9]>
+<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js">
+</script>
+<![endif]-->
+
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+
+<style>
+body {font-family: Verdana, sans-serif; font-size:0.8em;}
+header,nav, section,article,footer
+{border:1px solid grey; margin:5px; padding:8px;}
+nav ul {margin:0; padding:0;}
+nav ul li {display:inline; margin:5px;}
+html{
+  height:100%;
+}
+body {
+  height:100%;
+}
+#mask{
+   position:fixed;
+   //top:0;
+   height: 100%;
+   width:100%;
+   box-sizing: border-box;
+   background-color:black;
+   opacity:0;
+   //z-index: 10;
+   transition:opacity 0.5s;
+   //padding
+   //display:none;
+}
+
+#mask.active{
+  opacity: 0.2;
+}
+</style>
+</head>
+
+<body id="b" >
+<!--
+<header>
+  <h1>HTML5 SKeleton</h1>
+</header>
+
+<nav>
+<ul>
+  <li><a href="html5_semantic_elements.asp">HTML5 Semantic</a></li>
+  <li><a href="html5_geolocation.asp">HTML5 Geolocation</a></li>
+  <li><a href="html5_canvas.asp">HTML5 Graphics</a></li>
+</ul>
+</nav>
+
+<section>
+
+<h1>Famous Cities</h1>
+
+<article>
+<h2>London</h2>
+<p>London is the capital city of England. It is the most populous city in the United Kingdom,
+with a metropolitan area of over 13 million inhabitants.</p>
+</article>
+
+<article>
+<h2>Paris</h2>
+<p>Paris is the capital and most populous city of France.</p>
+</article>
+
+<article>
+<h2>Tokyo</h2>
+<p>Tokyo is the capital of Japan, the center of the Greater Tokyo Area,
+and the most populous metropolitan area in the world.</p>
+</article>
+
+</section>
+<footer style="width:80% ; margin: 20px auto">
+<p>&copy; 2015 YuPan. All rights reserved.</p>
+</footer>
+<canvas id="myCanvas" width="400" height="200"></canvas>-->
+
+
+<form>
+<input type="file" id="fileinput"  class="btn btn-primary btn-lg" style="width:100%" name="picorvideo" accept="image/*, video/*"/>
+<!--<input type="text" id="url  url" />-->
+<!--<input type="button" id="sub sub"   class="btn btn-primary btn-lg" value="submit"/>-->
+<!-- Standard button -->
+</form>
+
+<div id="mask"></div>
+
+
+
+
+<div id="imgarea" style="width:98% ; margin: 20px auto"></div>
+
+
+<div id="blackcover" style="background:#1A1A1A; opacity:0.7; position:fixed; top:0; left:0;width: 100%;height:100%; display:none"></div>
+
+
+<script>
+//var canvas = document.getElementById('myCanvas');
+//
+//if (canvas.getContext) {
+  //  var ctx = canvas.getContext('2d');
+//}
+
+//var img = new Image();
+
+
+$("#mask")[0].ondragover=  function(){
+  $("#mask").addClass("active");
+  return false;
+};
+
+$("#mask")[0].ondragleave=  function(){
+  $("#mask").removeClass("active");
+  return false;
+};
+
+$("#mask")[0].ondrop=function(e){
+   e.stopPropagation();
+   e.preventDefault();
+   e = e || window.event;
+  var files = e.dataTransfer.files;
+  if(files)  readFile(files[0]);
+  $("#mask").removeClass("active");
+
+};
+
+$("#blackcover")[0].ondrop=function(e){
+   e.stopPropagation();
+   e.preventDefault();
+   return false;
+};
+
+$("#blackcover")[0].ondragover=  function(){
+ e.preventDefault();
+  return false;
+};
+
+
+
+document.getElementById("fileinput").onchange = function(e){
+
+     if(!e.target.files[0])
+            return;
+    
+     readFile(e.target.files[0],0);
+   
+     console.log(e.target.files[0].type);
+};
+/*
+document.getElementById("sub sub").onclick = function(){
+  alert("qwe");
+  //readFile(document.getElementById("url").value);
+};
+*/
+
+
+function readFile(file){
+	     
+//  var reader = new FileReader();
+var imageType=/image.*/;
+var videoType=/video.*/;
+var imgorVideo;
+
+
+var container=document.createElement("div");
+
+container.style.position="relative";
+//container.style.top=0;
+//container.style.left=0;
+//container.style.display="block";
+container.style.float="left";
+document.getElementById("imgarea").appendChild(container);
+
+
+    var cross=document.createElement("button");
+    cross.type="button";
+    cross.className="btn btn-default btn-md";
+    cross.style.display="none";
+    cross.style.zIndex="1";
+
+
+
+    var zoom=document.createElement("button");
+    zoom.type="button";
+    zoom.className="btn btn-default btn-md";
+    zoom.style.display="none";
+    zoom.style.zIndex="1";
+
+
+    cross.innerHTML="<span class='glyphicon glyphicon-remove' aria-hidden='true'/>";
+    zoom.innerHTML="<span class='glyphicon glyphicon-zoom-in' aria-hidden='true'/>";
+    //var cross=document.createElement("span");
+    //var zoom=document.createElement("span");
+   // cross.className="glyphicon glyphicon-remove";
+    //zoom.className="glyphicon glyphicon-zoom-in";
+    cross.style.position="absolute";
+    zoom.style.position="absolute";
+    cross.style.right="70px";
+    zoom.style.right="20px";
+    cross.style.top="20px";
+    zoom.style.top="20px";
+     //container.appendChild(imgorVideo);
+    container.appendChild(cross);
+    container.appendChild(zoom);
+    cross.onclick =function(){
+      //alert("123");
+   container.parentNode.removeChild(container);};
+
+   
+
+
+  /*cross.onclick=function(){ 
+     var backpanel=document.createElement("div");
+     var piczoom=document.createElement("img");
+     piczoom.height=600;
+     backpanel.appendChild(piczoom);
+     backpanel.style.background="";
+     body.appendChild(backpanel);
+   };*/
+
+   container.onmouseover=function(){
+      zoom.style.display="inline";
+      cross.style.display="inline";
+  }
+
+    container.onmouseout=function(){
+      zoom.style.display="none";
+      cross.style.display="none";
+  }
+
+  zoom.onclick=function(){
+      //document.getElementById("blackcover").style.height=2*document.getElementById("b").clientWidth;
+      document.getElementById("blackcover").style.display="block";
+     // console.info(this.parentNode.childNodes[2].tagName=="IMG");
+      if(this.parentNode.childNodes[2].tagName==="IMG")
+         var zoompic=document.createElement("img");
+      else{
+         var zoompic=document.createElement("video");
+          zoompic.controls=true;
+          zoompic.isPlay=false;
+          //zoompic.style.display="block";
+       }
+
+     // zoompic.src=this.parentNode.getElementsByTagName("img")[0].src;
+      zoompic.src=this.parentNode.childNodes[2].src;
+      zoompic.style.display="block";
+      zoompic.style.width="70%";
+     
+     
+      //String(Math.min(600,zoompic.height))+"px";
+     
+      zoompic.style.margin="15%";
+      zoompic.style.position="fixed";
+      zoompic.style.top=0;    
+       zoompic.style.left=0;  
+      //zoompic.style.opacity=1;
+
+      zoompic.ondrop=function(e){
+      e.stopPropagation();
+      e.preventDefault();
+      return false;
+      };
+
+     zoompic.ondragover=  function(){
+
+      return false;
+     };
+      document.getElementById("b").appendChild(zoompic);
+    
+      
+      //console.info(zoompic.clientWidth/window.innerWidth);
+     
+      zoompic.style.marginTop=String((window.innerHeight-zoompic.clientHeight)/2/window.innerWidth*100)+"%";
+       //console.info(zoompic.clientHeight/window.innerWidth);
+
+        if(zoompic.clientHeight>window.innerHeight){
+            //zoompic.style.height="80%";
+            console.info(zoompic.clientHeight);
+            zoompic.style.width="40%";
+            console.info(zoompic.clientHeight);
+        zoompic.style.marginTop=String((window.innerHeight-zoompic.clientHeight)/2/window.innerWidth*100)+"%";
+            zoompic.style.marginLeft="30%";
+
+        }
+        
+        document.getElementById("blackcover").onclick=function(){
+          this.style.display="none";
+          this.parentNode.removeChild(zoompic);
+          //
+        };
+   };
+
+
+
+if(typeof file==="string")//if file is a url
+{
+  //alert("123");
+  imgorVideo= document.createElement("iframe");
+  imgorVideo.src=file;
+
+}
+
+else if(file.type.match(imageType)){
+  
+   imgorVideo= document.createElement("img");
+   //imgorVideo.style.margin="5px";
+ imgorVideo.src=window.URL.createObjectURL(file);
+    
+  //imgorVideo.style.width="500px";
+ // imgorVideo.style.display="inline-block";
+  //imgorVideo.style.position="relative";
+ 
+}
+else if(file.type.match(videoType)){
+  imgorVideo= document.createElement("video");
+  //imgorVideo.style.position="relative";
+  //imgorVideo.style.top=0;
+  //imgorVideo.style.left=0;
+     // console.log(imgorVideo.style.zIndex);
+
+  //imgorVideo.ondblclick=function(){ this.style.display="none";};
+  imgorVideo.controls=true;
+  imgorVideo.isPlay=false;
+  imgorVideo.src=window.URL.createObjectURL(file);
+  
+  /*imgorVideo.onclick=function(){ 
+  	 if(this.isPlay){
+  	 	this.pause(); 
+  	     this.isPlay=false;
+  	 }
+
+  	else{
+        this.play(); 
+  	     this.isPlay=true;
+  	}
+
+  	 };
+ imgorVideo.onplay=function(){this.isPlay=true};
+ imgorVideo.onpause=function(){this.isPlay=false};*/
+  	
+
+}
+
+    //    myVideo.src = window.URL.createObjectURL();
+      //}
+    //  myVideo.play();
+  imgorVideo.height=300;
+  
+  // imgorVideo.style.display="inline";
+//imgorVideo.onload = function(e) {
+   // window.URL.revokeObjectURL(this.src);
+    
+    //imgorVideo.width=500;
+      container.style.height="300px";
+      imgorVideo.ondrop=function(e){
+      e.stopPropagation();
+      e.preventDefault();
+      return false;
+      };
+
+     imgorVideo.ondragover=  function(){
+
+      return false;
+     };
+        container.appendChild(imgorVideo);
+
+
+//}
+
+ // reader.onload = function(e){
+   // applyDataUrlToCanvas( reader.result );
+  //};
+
+  //reader.readAsDataURL(file);
+}
+/*
+function applyDataUrlToCanvas(result){
+	var img= document.createElement("img");
+
+	img.onload = function(e) {
+   // window.URL.revokeObjectURL(this.src);
+    img.height=300;
+    img.width=500;
+    document.getElementById("imgarea").appendChild(img);
+}
+    img.src = result;
+   
+    //ctx.drawImage(img, 0, 0); 
+   
+}*/
+</script>
+
+
+</body>
+</html>
